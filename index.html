@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Games Hub</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f0f1a;
+      color: #e0e0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      margin-top: 8px;
+      color: #888;
+      font-size: 0.95rem;
+      letter-spacing: 1px;
+    }
+
+    /* --- Nav buttons --- */
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    nav button {
+      padding: 10px 22px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #1e1e30;
+      color: #c4c4e0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    nav button:hover {
+      background: #2a2a45;
+      border-color: #a78bfa;
+      color: #fff;
+    }
+
+    nav button.active {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      border-color: transparent;
+      color: #fff;
+      font-weight: 600;
+      transform: scale(1.04);
+    }
+
+    /* --- Game panel --- */
+    .game-panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a45;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .game-panel.visible {
+      display: flex;
+    }
+
+    .game-panel h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #d0d0f0;
+    }
+
+    .game-panel .game-description {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .game-content {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Placeholder box shown until logic is implemented */
+    .placeholder-box {
+      width: 100%;
+      min-height: 220px;
+      border: 2px dashed #2e2e50;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+    }
+
+    /* --- Shared action button --- */
+    .btn-action {
+      padding: 10px 28px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-action:hover {
+      opacity: 0.88;
+      transform: scale(1.03);
+    }
+
+    /* =====================
+       GAME-SPECIFIC STYLES
+       ===================== */
+
+    /* 1. Tic Tac Toe */
+    #ttt-board {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      grid-template-rows: repeat(3, 90px);
+      gap: 6px;
+    }
+
+    #ttt-board .cell {
+      background: #12122a;
+      border: 2px solid #2e2e50;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #a78bfa;
+      transition: background 0.15s;
+    }
+
+    #ttt-board .cell:hover:not(:disabled) {
+      background: #1e1e40;
+    }
+
+    #ttt-board .cell:disabled {
+      cursor: default;
+    }
+
+    #ttt-board .cell.x { color: #a78bfa; }
+    #ttt-board .cell.o { color: #60a5fa; }
+    #ttt-board .cell.winner { background: #1e3a1e; border-color: #34d399; }
+
+    #ttt-status {
+      font-size: 1rem;
+      color: #a78bfa;
+      min-height: 24px;
+      font-weight: 500;
+    }
+
+    #ttt-status.result-win  { color: #34d399; font-weight: 700; font-size: 1.1rem; }
+    #ttt-status.result-draw { color: #f9a825; font-weight: 700; font-size: 1.1rem; }
+
+    /* 2. Memory Game */
+    #memory-board {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      gap: 8px;
+    }
+
+    /* Each card is a flip container */
+    .memory-card {
+      width: 70px;
+      height: 70px;
+      perspective: 600px;
+      cursor: pointer;
+    }
+
+    .memory-card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.35s ease;
+      border-radius: 8px;
+    }
+
+    .memory-card.flipped .memory-card-inner,
+    .memory-card.matched .memory-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .memory-card-front,
+    .memory-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /* Back = face-down side (shown by default) */
+    .memory-card-back {
+      background: #12122a;
+      border: 2px solid #2e2e50;
+      font-size: 1.4rem;
+      color: #3a3a60;
+    }
+
+    /* Front = emoji side (shown when flipped) */
+    .memory-card-front {
+      background: #1e1e40;
+      border: 2px solid #4a4a80;
+      font-size: 1.8rem;
+      transform: rotateY(180deg);
+    }
+
+    .memory-card.matched .memory-card-front {
+      background: #1a3a2a;
+      border-color: #34d399;
+    }
+
+    .memory-card:not(.flipped):not(.matched):hover .memory-card-back {
+      background: #1a1a3a;
+      border-color: #5a5a90;
+    }
+
+    #memory-info {
+      display: flex;
+      gap: 24px;
+      font-size: 0.95rem;
+    }
+
+    #memory-moves { color: #f9a825; }
+    #memory-pairs { color: #60a5fa; }
+
+    #memory-status {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #34d399;
+      min-height: 24px;
+    }
+
+    /* 3. Reaction Time */
+    #reaction-area {
+      width: 100%;
+      min-height: 220px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #12122a;
+      border: 2px solid #2e2e50;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      user-select: none;
+    }
+
+    /* state: waiting (red — don't click yet) */
+    #reaction-area.state-waiting {
+      background: #2a0d0d;
+      border-color: #f87171;
+      cursor: not-allowed;
+    }
+
+    /* state: ready (green — click now!) */
+    #reaction-area.state-ready {
+      background: #0d2a1a;
+      border-color: #34d399;
+      cursor: pointer;
+    }
+
+    /* state: result (neutral) */
+    #reaction-area.state-result {
+      background: #1a1a2e;
+      border-color: #a78bfa;
+      cursor: pointer;
+    }
+
+    #reaction-icon {
+      font-size: 2.8rem;
+      line-height: 1;
+    }
+
+    #reaction-prompt {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #c0c0e0;
+      text-align: center;
+      padding: 0 12px;
+    }
+
+    #reaction-sub {
+      font-size: 0.82rem;
+      color: #666;
+    }
+
+    #reaction-result {
+      font-size: 1.4rem;
+      font-weight: 700;
+      min-height: 28px;
+      text-align: center;
+    }
+
+    #reaction-result.res-good     { color: #34d399; }
+    #reaction-result.res-toosoon  { color: #f87171; }
+
+    #reaction-best {
+      font-size: 0.82rem;
+      color: #888;
+      min-height: 18px;
+    }
+
+    /* 4. Sliding Puzzle */
+    #puzzle-board {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      grid-template-rows: repeat(3, 90px);
+      gap: 6px;
+    }
+
+    #puzzle-board .tile {
+      background: #1e1e40;
+      border: 2px solid #2e2e50;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #d0d0f0;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.12s;
+      user-select: none;
+    }
+
+    #puzzle-board .tile.empty {
+      background: #0f0f1a;
+      border-color: #1a1a2e;
+      cursor: default;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
+    }
+
+    #puzzle-board .tile.movable:hover {
+      background: #2a2a60;
+      border-color: #a78bfa;
+      transform: scale(1.06);
+    }
+
+    #puzzle-board .tile.solved {
+      background: #1a3a2a;
+      border-color: #34d399;
+      color: #34d399;
+    }
+
+    #puzzle-moves {
+      font-size: 1rem;
+      color: #f9a825;
+      min-height: 24px;
+    }
+
+    #puzzle-status {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #34d399;
+      min-height: 24px;
+    }
+
+    /* 5. Snake and Ladders */
+    #snl-board {
+      display: grid;
+      grid-template-columns: repeat(10, 44px);
+      grid-template-rows: repeat(10, 44px);
+      gap: 2px;
+    }
+
+    #snl-board .snl-cell {
+      background: #12122a;
+      border: 1px solid #2e2e50;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: #555;
+      position: relative;
+      gap: 1px;
+    }
+
+    #snl-board .snl-cell.ladder {
+      background: #0d2a1a;
+      border-color: #34d399;
+      color: #34d399;
+    }
+
+    #snl-board .snl-cell.snake {
+      background: #2a0d0d;
+      border-color: #f87171;
+      color: #f87171;
+    }
+
+    #snl-board .snl-cell .cell-players {
+      display: flex;
+      gap: 1px;
+      font-size: 0.75rem;
+      line-height: 1;
+    }
+
+    /* Player info panel */
+    #snl-players {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .snl-player-card {
+      background: #12122a;
+      border: 2px solid #2e2e50;
+      border-radius: 10px;
+      padding: 10px 18px;
+      text-align: center;
+      min-width: 110px;
+      transition: border-color 0.2s;
+    }
+
+    .snl-player-card.active {
+      border-color: #a78bfa;
+      background: #1a1a3a;
+    }
+
+    .snl-player-card .snl-player-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .snl-player-card .snl-player-pos {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #d0d0f0;
+    }
+
+    #snl-dice-display {
+      font-size: 3rem;
+      min-height: 52px;
+      line-height: 1;
+    }
+
+    #snl-log {
+      font-size: 0.85rem;
+      color: #aaa;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    #snl-log .highlight { color: #f9a825; font-weight: 600; }
+    #snl-log .snake-msg { color: #f87171; }
+    #snl-log .ladder-msg { color: #34d399; }
+    #snl-log .win-msg { color: #a78bfa; font-size: 1.05rem; font-weight: 700; }
+
+    #snl-legend {
+      display: flex;
+      gap: 16px;
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    #snl-legend span { display: flex; align-items: center; gap: 4px; }
+
+    /* --- Stats bar --- */
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      justify-content: center;
+      align-items: center;
+      background: #0f0f1a;
+      border: 1px solid #22223a;
+      border-radius: 8px;
+      padding: 8px 14px;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .stat-label {
+      font-size: 0.67rem;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #a78bfa;
+    }
+
+    .btn-clear-stats {
+      padding: 3px 10px;
+      border: 1px solid #2e2e50;
+      border-radius: 5px;
+      background: transparent;
+      color: #555;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      align-self: center;
+    }
+
+    .btn-clear-stats:hover {
+      color: #f87171;
+      border-color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Mini Games Hub</h1>
+    <p>Pick a game and start playing</p>
+  </header>
+
+  <nav>
+    <button id="btn-tictactoe"     onclick="showGame('tictactoe')">Tic Tac Toe</button>
+    <button id="btn-memory"        onclick="showGame('memory')">Memory Game</button>
+    <button id="btn-reaction"      onclick="showGame('reaction')">Reaction Time</button>
+    <button id="btn-sliding"       onclick="showGame('sliding')">Sliding Puzzle</button>
+    <button id="btn-snakeladders"  onclick="showGame('snakeladders')">Snake &amp; Ladders</button>
+  </nav>
+
+  <!-- ===== 1. Tic Tac Toe ===== -->
+  <section id="game-tictactoe" class="game-panel">
+    <h2>Tic Tac Toe</h2>
+    <p class="game-description">Two players take turns — X always goes first.</p>
+    <div class="game-content">
+      <p id="ttt-status">Player X's turn</p>
+      <div id="ttt-board">
+        <button class="cell" data-index="0" onclick="tttMove(0)"></button>
+        <button class="cell" data-index="1" onclick="tttMove(1)"></button>
+        <button class="cell" data-index="2" onclick="tttMove(2)"></button>
+        <button class="cell" data-index="3" onclick="tttMove(3)"></button>
+        <button class="cell" data-index="4" onclick="tttMove(4)"></button>
+        <button class="cell" data-index="5" onclick="tttMove(5)"></button>
+        <button class="cell" data-index="6" onclick="tttMove(6)"></button>
+        <button class="cell" data-index="7" onclick="tttMove(7)"></button>
+        <button class="cell" data-index="8" onclick="tttMove(8)"></button>
+      </div>
+      <button class="btn-action" onclick="resetGame('tictactoe')">Reset Game</button>
+    </div>
+    <div class="stats-bar" id="ttt-stats"></div>
+  </section>
+
+  <!-- ===== 2. Memory Game ===== -->
+  <section id="game-memory" class="game-panel">
+    <h2>Memory Game</h2>
+    <p class="game-description">Flip two cards — match all 8 pairs to win!</p>
+    <div class="game-content">
+      <div id="memory-info">
+        <span id="memory-moves">Moves: 0</span>
+        <span id="memory-pairs">Pairs: 0 / 8</span>
+      </div>
+      <div id="memory-board">
+        <!-- 16 cards generated by JS -->
+      </div>
+      <p id="memory-status"></p>
+      <button class="btn-action" onclick="resetGame('memory')">Restart</button>
+    </div>
+    <div class="stats-bar" id="memory-stats"></div>
+  </section>
+
+  <!-- ===== 3. Reaction Time ===== -->
+  <section id="game-reaction" class="game-panel">
+    <h2>Reaction Time</h2>
+    <p class="game-description">Wait for green, then click as fast as you can!</p>
+    <div class="game-content">
+
+      <div id="reaction-area" onclick="reactionClick()">
+        <div id="reaction-icon">🖱️</div>
+        <span id="reaction-prompt">Click to Start</span>
+        <span id="reaction-sub"></span>
+      </div>
+
+      <p id="reaction-result"></p>
+      <p id="reaction-best"></p>
+      <button class="btn-action" id="reaction-btn" onclick="resetReaction()">Reset</button>
+
+    </div>
+    <div class="stats-bar" id="reaction-stats"></div>
+  </section>
+
+  <!-- ===== 4. Sliding Puzzle ===== -->
+  <section id="game-sliding" class="game-panel">
+    <h2>Sliding Puzzle</h2>
+    <p class="game-description">Arrange 1–8 in order. Click a tile next to the blank to slide it.</p>
+    <div class="game-content">
+      <p id="puzzle-moves">Moves: 0</p>
+      <div id="puzzle-board">
+        <!-- 9 tiles generated by JS -->
+      </div>
+      <p id="puzzle-status"></p>
+      <button class="btn-action" onclick="resetGame('sliding')">Shuffle</button>
+    </div>
+    <div class="stats-bar" id="puzzle-stats"></div>
+  </section>
+
+  <!-- ===== 5. Snake and Ladders ===== -->
+  <section id="game-snakeladders" class="game-panel">
+    <h2>Snake &amp; Ladders</h2>
+    <p class="game-description">First to reach 100 wins. Climb ladders, dodge snakes!</p>
+    <div class="game-content">
+
+      <!-- Player scorecards -->
+      <div id="snl-players">
+        <div class="snl-player-card active" id="snl-p1-card">
+          <div class="snl-player-name">🔴 Player 1</div>
+          <div class="snl-player-pos" id="snl-p1-pos">0</div>
+        </div>
+        <div class="snl-player-card" id="snl-p2-card">
+          <div class="snl-player-name">🔵 Player 2</div>
+          <div class="snl-player-pos" id="snl-p2-pos">0</div>
+        </div>
+      </div>
+
+      <!-- Dice face + event log -->
+      <div id="snl-dice-display">🎲</div>
+      <p id="snl-log">Press Roll Dice to start!</p>
+
+      <!-- Board -->
+      <div id="snl-board"></div>
+
+      <!-- Legend -->
+      <div id="snl-legend">
+        <span><span style="color:#34d399">■</span> Ladder (climb up)</span>
+        <span><span style="color:#f87171">■</span> Snake (slide down)</span>
+      </div>
+
+      <!-- Buttons -->
+      <div style="display:flex; gap:12px;">
+        <button class="btn-action" id="snl-roll-btn" onclick="snlRoll()">Roll Dice</button>
+        <button class="btn-action" style="background:#2a2a45;" onclick="resetGame('snakeladders')">Reset</button>
+      </div>
+
+    </div>
+    <div class="stats-bar" id="snl-stats"></div>
+  </section>
+
+  <script>
+    // ─── Active game tracking ───────────────────────────────────────────────
+    let currentGame = null;
+
+    // ─── showGame ───────────────────────────────────────────────────────────
+    function showGame(gameId) {
+      // Hide all panels
+      document.querySelectorAll('.game-panel').forEach(panel => {
+        panel.classList.remove('visible');
+      });
+
+      // Deactivate all nav buttons
+      document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show the requested panel
+      const panel = document.getElementById('game-' + gameId);
+      if (panel) panel.classList.add('visible');
+
+      // Activate the matching nav button
+      const navBtn = document.getElementById('btn-' + gameId);
+      if (navBtn) navBtn.classList.add('active');
+
+      // Reset game state when switching
+      currentGame = gameId;
+      resetGame(gameId);
+    }
+
+    // ─── resetGame  (dispatches to per-game reset) ──────────────────────────
+    function resetGame(gameId) {
+      switch (gameId) {
+        case 'tictactoe':    resetTicTacToe();    break;
+        case 'memory':       resetMemory();       break;
+        case 'reaction':     resetReaction();     break;
+        case 'sliding':      resetSliding();      break;
+        case 'snakeladders': resetSnakeLadders(); break;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 1.  TIC TAC TOE
+    // ═══════════════════════════════════════════════════════════════════════
+    const WIN_LINES = [
+      [0,1,2], [3,4,5], [6,7,8],  // rows
+      [0,3,6], [1,4,7], [2,5,8],  // columns
+      [0,4,8], [2,4,6]            // diagonals
+    ];
+
+    let tttBoard   = Array(9).fill(null);
+    let tttCurrent = 'X';
+    let tttOver    = false;
+
+    function tttMove(index) {
+      if (tttOver || tttBoard[index]) return;
+
+      tttBoard[index] = tttCurrent;
+
+      const cell = document.querySelector(`#ttt-board .cell[data-index="${index}"]`);
+      cell.textContent = tttCurrent;
+      cell.classList.add(tttCurrent.toLowerCase());
+      cell.disabled = true;
+
+      const winner = tttCheckWinner();
+      const status = document.getElementById('ttt-status');
+
+      if (winner) {
+        tttOver = true;
+        status.textContent = `Player ${winner.player} wins!`;
+        status.className = 'result-win';
+        // Highlight winning cells
+        winner.line.forEach(i => {
+          document.querySelector(`#ttt-board .cell[data-index="${i}"]`).classList.add('winner');
+        });
+        // Disable all remaining cells
+        document.querySelectorAll('#ttt-board .cell').forEach(c => c.disabled = true);
+        const _ts = getStats();
+        _ts.tictactoe[winner.player === 'X' ? 'xWins' : 'oWins']++;
+        _ts.tictactoe.games++;
+        saveStats(_ts); tttRenderStats();
+      } else if (tttBoard.every(v => v !== null)) {
+        tttOver = true;
+        status.textContent = "It's a draw!";
+        status.className = 'result-draw';
+        const _td = getStats();
+        _td.tictactoe.draws++;
+        _td.tictactoe.games++;
+        saveStats(_td); tttRenderStats();
+      } else {
+        tttCurrent = tttCurrent === 'X' ? 'O' : 'X';
+        status.textContent = `Player ${tttCurrent}'s turn`;
+        status.className = '';
+      }
+    }
+
+    // Returns { player, line } on win, or null.
+    function tttCheckWinner() {
+      for (const line of WIN_LINES) {
+        const [a, b, c] = line;
+        if (tttBoard[a] && tttBoard[a] === tttBoard[b] && tttBoard[a] === tttBoard[c]) {
+          return { player: tttBoard[a], line };
+        }
+      }
+      return null;
+    }
+
+    function resetTicTacToe() {
+      tttBoard   = Array(9).fill(null);
+      tttCurrent = 'X';
+      tttOver    = false;
+      const status = document.getElementById('ttt-status');
+      status.textContent = "Player X's turn";
+      status.className = '';
+      document.querySelectorAll('#ttt-board .cell').forEach(cell => {
+        cell.textContent = '';
+        cell.className = 'cell';
+        cell.disabled = false;
+      });
+      tttRenderStats();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 2.  MEMORY GAME
+    // ═══════════════════════════════════════════════════════════════════════
+    const MEMORY_EMOJIS = ['🍎','🍌','🍇','🍓','🍒','🥝','🍑','🍍'];
+
+    let memoryFirst   = null;   // first flipped card element
+    let memorySecond  = null;   // second flipped card element
+    let memoryMoves   = 0;
+    let memoryMatched = 0;
+    let memoryLocked  = false;  // locked while checking a non-match pair
+
+    function memoryFlipCard(card) {
+      // Ignore: board locked, already flipped/matched, or same card clicked twice
+      if (memoryLocked) return;
+      if (card.classList.contains('flipped')) return;
+      if (card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+
+      if (!memoryFirst) {
+        // First pick
+        memoryFirst = card;
+        return;
+      }
+
+      // Second pick
+      memorySecond = card;
+      memoryMoves++;
+      document.getElementById('memory-moves').textContent = `Moves: ${memoryMoves}`;
+
+      if (memoryFirst.dataset.emoji === memorySecond.dataset.emoji) {
+        // Match!
+        memoryFirst.classList.add('matched');
+        memorySecond.classList.add('matched');
+        memoryFirst  = null;
+        memorySecond = null;
+        memoryMatched++;
+        document.getElementById('memory-pairs').textContent = `Pairs: ${memoryMatched} / 8`;
+
+        if (memoryMatched === 8) {
+          document.getElementById('memory-status').textContent =
+            `You Won! 🎉 Completed in ${memoryMoves} moves.`;
+          const _ms = getStats();
+          _ms.memory.gamesWon++;
+          if (_ms.memory.bestMoves === null || memoryMoves < _ms.memory.bestMoves) _ms.memory.bestMoves = memoryMoves;
+          saveStats(_ms); memoryRenderStats();
+        }
+      } else {
+        // No match — lock board, flip both back after 1 second
+        memoryLocked = true;
+        setTimeout(() => {
+          memoryFirst.classList.remove('flipped');
+          memorySecond.classList.remove('flipped');
+          memoryFirst  = null;
+          memorySecond = null;
+          memoryLocked = false;
+        }, 1000);
+      }
+    }
+
+    function resetMemory() {
+      memoryFirst   = null;
+      memorySecond  = null;
+      memoryMoves   = 0;
+      memoryMatched = 0;
+      memoryLocked  = false;
+
+      document.getElementById('memory-moves').textContent  = 'Moves: 0';
+      document.getElementById('memory-pairs').textContent  = 'Pairs: 0 / 8';
+      document.getElementById('memory-status').textContent = '';
+      memoryRenderStats();
+
+      // Build shuffled deck (2 copies of each emoji)
+      const deck = [...MEMORY_EMOJIS, ...MEMORY_EMOJIS]
+        .sort(() => Math.random() - 0.5);
+
+      const board = document.getElementById('memory-board');
+      board.innerHTML = '';
+
+      deck.forEach(emoji => {
+        // Outer flip container
+        const card = document.createElement('div');
+        card.className = 'memory-card';
+        card.dataset.emoji = emoji;
+
+        // Inner wrapper that rotates
+        const inner = document.createElement('div');
+        inner.className = 'memory-card-inner';
+
+        // Front (emoji, shown when flipped)
+        const front = document.createElement('div');
+        front.className = 'memory-card-front';
+        front.textContent = emoji;
+
+        // Back (face-down, shown by default)
+        const back = document.createElement('div');
+        back.className = 'memory-card-back';
+        back.textContent = '?';
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+        card.appendChild(inner);
+
+        card.addEventListener('click', () => memoryFlipCard(card));
+        board.appendChild(card);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 3.  REACTION TIME
+    // ═══════════════════════════════════════════════════════════════════════
+    //  States:  idle → waiting → ready → result  (→ idle on reset)
+    let reactionState     = 'idle';
+    let reactionTimer     = null;
+    let reactionStartTime = 0;
+    let reactionBest      = null;   // best ms this session
+
+    function reactionSetArea(state, icon, prompt, sub) {
+      const area = document.getElementById('reaction-area');
+      // Remove all state classes then add the new one
+      area.className = state ? `state-${state}` : '';
+      document.getElementById('reaction-icon').textContent   = icon;
+      document.getElementById('reaction-prompt').textContent = prompt;
+      document.getElementById('reaction-sub').textContent    = sub;
+    }
+
+    function reactionClick() {
+      if (reactionState === 'idle') {
+        // Start: pick random delay 2000–5000 ms
+        reactionState = 'waiting';
+        reactionSetArea('waiting', '🔴', 'Wait for green...', 'Don\'t click yet!');
+        document.getElementById('reaction-result').textContent = '';
+        document.getElementById('reaction-result').className   = 'reaction-result';
+
+        const delay = 2000 + Math.random() * 3000;
+        reactionTimer = setTimeout(() => {
+          reactionState     = 'ready';
+          reactionStartTime = Date.now();
+          reactionSetArea('ready', '🟢', 'CLICK NOW!', '');
+        }, delay);
+
+      } else if (reactionState === 'waiting') {
+        // Clicked too early
+        clearTimeout(reactionTimer);
+        reactionState = 'idle';
+        reactionSetArea('result', '😬', 'Too Soon!', 'Click to try again');
+        const resultEl = document.getElementById('reaction-result');
+        resultEl.textContent = 'You clicked before the signal!';
+        resultEl.className   = 'res-toosoon';
+
+      } else if (reactionState === 'ready') {
+        // Valid click — measure time
+        const ms = Date.now() - reactionStartTime;
+        reactionState = 'idle';
+
+        // Update in-memory + persisted best
+        if (reactionBest === null || ms < reactionBest) {
+          reactionBest = ms;
+          document.getElementById('reaction-best').textContent = `Best: ${reactionBest} ms`;
+        }
+        const _rr = getStats();
+        if (_rr.reaction.bestMs === null || ms < _rr.reaction.bestMs) _rr.reaction.bestMs = ms;
+        saveStats(_rr); reactionRenderStats();
+
+        const rating = ms < 200 ? '⚡ Incredible!' : ms < 300 ? '🔥 Great!' : ms < 500 ? '👍 Good' : '🐢 Slow';
+        reactionSetArea('result', '✅', `${ms} ms`, 'Click to play again');
+        const resultEl = document.getElementById('reaction-result');
+        resultEl.textContent = rating;
+        resultEl.className   = 'res-good';
+
+      } else if (reactionState === 'result') {
+        // After seeing result, click anywhere on the box to play again
+        reactionState = 'idle';
+        reactionSetArea('', '🖱️', 'Click to Start', '');
+        document.getElementById('reaction-result').textContent = '';
+        document.getElementById('reaction-result').className   = '';
+      }
+    }
+
+    function resetReaction() {
+      clearTimeout(reactionTimer);
+      reactionState = 'idle';
+      reactionBest  = null;
+      reactionSetArea('', '🖱️', 'Click to Start', '');
+      document.getElementById('reaction-result').textContent = '';
+      document.getElementById('reaction-result').className   = '';
+      document.getElementById('reaction-best').textContent   = '';
+      reactionRenderStats();  // also restores persisted best into reactionBest
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 4.  SLIDING PUZZLE
+    // ═══════════════════════════════════════════════════════════════════════
+    let puzzleTiles = [];   // array of 9: values 1-8 and 0 (empty)
+    let puzzleMoves = 0;
+
+    // Returns true if the board is solvable (even number of inversions).
+    function puzzleIsSolvable(tiles) {
+      const nums = tiles.filter(n => n !== 0);
+      let inversions = 0;
+      for (let i = 0; i < nums.length; i++)
+        for (let j = i + 1; j < nums.length; j++)
+          if (nums[i] > nums[j]) inversions++;
+      return inversions % 2 === 0;
+    }
+
+    // Shuffle until we get a solvable arrangement that isn't already solved.
+    function puzzleShuffle() {
+      const solved = [1,2,3,4,5,6,7,8,0];
+      let arr;
+      do {
+        arr = [...solved].sort(() => Math.random() - 0.5);
+      } while (!puzzleIsSolvable(arr) || arr.join() === solved.join());
+      return arr;
+    }
+
+    // Re-render all 9 tiles from puzzleTiles array.
+    function puzzleRender() {
+      const board = document.getElementById('puzzle-board');
+      board.innerHTML = '';
+      const emptyIdx = puzzleTiles.indexOf(0);
+
+      puzzleTiles.forEach((val, i) => {
+        const tile = document.createElement('div');
+
+        if (val === 0) {
+          tile.className = 'tile empty';
+        } else {
+          // A tile is movable if it sits directly adjacent (UDLR) to the empty slot.
+          const movable = puzzleIsAdjacent(i, emptyIdx);
+          tile.className = 'tile' + (movable ? ' movable' : '');
+          tile.textContent = val;
+          tile.addEventListener('click', () => puzzleMove(i));
+        }
+
+        board.appendChild(tile);
+      });
+    }
+
+    // Returns true if indices a and b are directly adjacent in the 3×3 grid.
+    function puzzleIsAdjacent(a, b) {
+      const rowA = Math.floor(a / 3), colA = a % 3;
+      const rowB = Math.floor(b / 3), colB = b % 3;
+      return Math.abs(rowA - rowB) + Math.abs(colA - colB) === 1;
+    }
+
+    function puzzleMove(tileIdx) {
+      const emptyIdx = puzzleTiles.indexOf(0);
+      if (!puzzleIsAdjacent(tileIdx, emptyIdx)) return;
+
+      // Swap tile with empty slot
+      [puzzleTiles[tileIdx], puzzleTiles[emptyIdx]] =
+        [puzzleTiles[emptyIdx], puzzleTiles[tileIdx]];
+
+      puzzleMoves++;
+      document.getElementById('puzzle-moves').textContent = `Moves: ${puzzleMoves}`;
+
+      puzzleRender();
+
+      // Check win: [1,2,3,4,5,6,7,8,0]
+      if (puzzleTiles.join() === '1,2,3,4,5,6,7,8,0') {
+        // Mark all tiles green
+        document.querySelectorAll('#puzzle-board .tile').forEach(t => {
+          t.classList.add('solved');
+          t.style.pointerEvents = 'none';
+        });
+        document.getElementById('puzzle-status').textContent =
+          `Solved! 🎉 Completed in ${puzzleMoves} moves.`;
+        const _ps = getStats();
+        _ps.sliding.solves++;
+        saveStats(_ps); puzzleRenderStats();
+      }
+    }
+
+    function resetSliding() {
+      puzzleTiles = puzzleShuffle();
+      puzzleMoves = 0;
+      document.getElementById('puzzle-moves').textContent  = 'Moves: 0';
+      document.getElementById('puzzle-status').textContent = '';
+      puzzleRender();
+      puzzleRenderStats();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 5.  SNAKE & LADDERS
+    // ═══════════════════════════════════════════════════════════════════════
+    const SNL_LADDERS = { 4:14, 9:31, 20:38, 28:84, 40:59, 51:67, 63:81, 71:91 };
+    const SNL_SNAKES  = { 17:7, 54:34, 62:19, 64:60, 87:24, 93:73, 95:75, 99:78 };
+
+    const DICE_FACES  = ['', '⚀','⚁','⚂','⚃','⚄','⚅'];
+    const PLAYER_TOKENS = ['🔴','🔵'];
+
+    let snlPos      = [0, 0];   // positions for player 1 and 2 (0 = not yet on board)
+    let snlTurn     = 0;        // 0 = player 1, 1 = player 2
+    let snlGameOver = false;
+
+    function snlRoll() {
+      if (snlGameOver) return;
+
+      const dice = Math.floor(Math.random() * 6) + 1;
+      document.getElementById('snl-dice-display').textContent = DICE_FACES[dice];
+
+      const player = snlTurn + 1;
+      let pos = snlPos[snlTurn] + dice;
+      let logParts = [`<span class="highlight">Player ${player}</span> rolled <b>${dice}</b>. `];
+
+      // Can't overshoot 100
+      if (pos > 100) {
+        pos = snlPos[snlTurn];
+        logParts.push(`Too high — needs exact roll to reach 100.`);
+      } else {
+        logParts.push(`Moved to <b>${pos}</b>. `);
+
+        // Check ladder
+        if (SNL_LADDERS[pos]) {
+          logParts.push(`<span class="ladder-msg">🪜 Ladder! Up to ${SNL_LADDERS[pos]}.</span>`);
+          pos = SNL_LADDERS[pos];
+        }
+        // Check snake
+        else if (SNL_SNAKES[pos]) {
+          logParts.push(`<span class="snake-msg">🐍 Snake! Down to ${SNL_SNAKES[pos]}.</span>`);
+          pos = SNL_SNAKES[pos];
+        }
+      }
+
+      snlPos[snlTurn] = pos;
+
+      // Update position cards
+      document.getElementById(`snl-p${snlTurn + 1}-pos`).textContent = pos;
+      snlRenderBoard();
+
+      // Win check
+      if (pos === 100) {
+        snlGameOver = true;
+        document.getElementById('snl-roll-btn').disabled = true;
+        document.getElementById('snl-log').innerHTML =
+          `<span class="win-msg">🏆 Player ${player} wins!</span>`;
+        document.getElementById(`snl-p${snlTurn + 1}-card`).style.borderColor = '#a78bfa';
+        const _ss = getStats();
+        _ss.snakeladders[snlTurn === 0 ? 'p1Wins' : 'p2Wins']++;
+        saveStats(_ss); snlRenderStats();
+        return;
+      }
+
+      document.getElementById('snl-log').innerHTML = logParts.join('');
+
+      // Switch turn
+      snlTurn = snlTurn === 0 ? 1 : 0;
+      document.getElementById('snl-p1-card').classList.toggle('active', snlTurn === 0);
+      document.getElementById('snl-p2-card').classList.toggle('active', snlTurn === 1);
+    }
+
+    // Build / refresh the 10×10 board with player tokens.
+    function snlRenderBoard() {
+      const board = document.getElementById('snl-board');
+      board.innerHTML = '';
+
+      // Build grid top-to-bottom; row 9 (bottom) = cells 1-10, row 0 (top) = cells 91-100.
+      for (let row = 9; row >= 0; row--) {
+        for (let col = 0; col < 10; col++) {
+          // Even rows go left→right, odd rows go right→left (snake pattern from bottom).
+          const rowFromBottom = 9 - row;
+          const num = rowFromBottom % 2 === 0
+            ? rowFromBottom * 10 + col + 1
+            : rowFromBottom * 10 + (9 - col) + 1;
+
+          const cell = document.createElement('div');
+          cell.className = 'snl-cell';
+          cell.id = 'snl-cell-' + num;
+
+          if (SNL_LADDERS[num]) cell.classList.add('ladder');
+          else if (SNL_SNAKES[num])  cell.classList.add('snake');
+
+          // Cell number
+          const numEl = document.createElement('span');
+          numEl.textContent = num;
+          cell.appendChild(numEl);
+
+          // Player tokens on this cell
+          const tokens = PLAYER_TOKENS.filter((_, i) => snlPos[i] === num);
+          if (tokens.length) {
+            const tokenEl = document.createElement('div');
+            tokenEl.className = 'cell-players';
+            tokenEl.textContent = tokens.join('');
+            cell.appendChild(tokenEl);
+          }
+
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    function resetSnakeLadders() {
+      snlPos      = [0, 0];
+      snlTurn     = 0;
+      snlGameOver = false;
+
+      document.getElementById('snl-dice-display').textContent     = '🎲';
+      document.getElementById('snl-log').textContent              = 'Press Roll Dice to start!';
+      document.getElementById('snl-p1-pos').textContent           = '0';
+      document.getElementById('snl-p2-pos').textContent           = '0';
+      document.getElementById('snl-roll-btn').disabled            = false;
+      document.getElementById('snl-p1-card').classList.add('active');
+      document.getElementById('snl-p2-card').classList.remove('active');
+      document.getElementById('snl-p1-card').style.borderColor   = '';
+      document.getElementById('snl-p2-card').style.borderColor   = '';
+
+      snlRenderBoard();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOCALSTORAGE STATS  (single key: "gameStats")
+    // ═══════════════════════════════════════════════════════════════════════
+    const STATS_DEFAULTS = {
+      tictactoe:    { xWins:0, oWins:0, draws:0, games:0 },
+      memory:       { bestMoves:null, gamesWon:0 },
+      reaction:     { bestMs:null },
+      sliding:      { solves:0 },
+      snakeladders: { p1Wins:0, p2Wins:0 }
+    };
+
+    function getStats() {
+      try {
+        const raw = localStorage.getItem('gameStats');
+        return raw ? { ...STATS_DEFAULTS, ...JSON.parse(raw) } : { ...STATS_DEFAULTS };
+      } catch { return { ...STATS_DEFAULTS }; }
+    }
+
+    function saveStats(stats) {
+      try { localStorage.setItem('gameStats', JSON.stringify(stats)); } catch {}
+    }
+
+    // Clear one game's slice and re-render its stats bar.
+    function clearGameStats(game) {
+      const stats = getStats();
+      stats[game] = { ...STATS_DEFAULTS[game] };
+      saveStats(stats);
+      if (game === 'reaction') {
+        reactionBest = null;
+        document.getElementById('reaction-best').textContent = '';
+      }
+      ({ tictactoe: tttRenderStats, memory: memoryRenderStats,
+         reaction: reactionRenderStats, sliding: puzzleRenderStats,
+         snakeladders: snlRenderStats })[game]();
+    }
+
+    // Render a stats bar from [label, value] pairs.
+    function renderStatsBar(game, pairs) {
+      return pairs.map(([label, val]) =>
+        `<div class="stat">
+           <span class="stat-label">${label}</span>
+           <span class="stat-value">${val}</span>
+         </div>`
+      ).join('') + `<button class="btn-clear-stats" onclick="clearGameStats('${game}')">Clear</button>`;
+    }
+
+    function tttRenderStats() {
+      const s = { ...STATS_DEFAULTS.tictactoe, ...getStats().tictactoe };
+      document.getElementById('ttt-stats').innerHTML = renderStatsBar('tictactoe', [
+        ['X Wins', s.xWins], ['O Wins', s.oWins], ['Draws', s.draws], ['Games', s.games]
+      ]);
+    }
+
+    function memoryRenderStats() {
+      const s = { ...STATS_DEFAULTS.memory, ...getStats().memory };
+      document.getElementById('memory-stats').innerHTML = renderStatsBar('memory', [
+        ['Best', s.bestMoves !== null ? s.bestMoves + ' moves' : '—'],
+        ['Won', s.gamesWon]
+      ]);
+    }
+
+    function reactionRenderStats() {
+      const s = { ...STATS_DEFAULTS.reaction, ...getStats().reaction };
+      // Restore persisted best into in-memory variable
+      if (s.bestMs !== null && (reactionBest === null || s.bestMs < reactionBest)) {
+        reactionBest = s.bestMs;
+        document.getElementById('reaction-best').textContent = `Best: ${reactionBest} ms`;
+      }
+      document.getElementById('reaction-stats').innerHTML = renderStatsBar('reaction', [
+        ['Best Time', s.bestMs !== null ? s.bestMs + ' ms' : '—']
+      ]);
+    }
+
+    function puzzleRenderStats() {
+      const s = { ...STATS_DEFAULTS.sliding, ...getStats().sliding };
+      document.getElementById('puzzle-stats').innerHTML = renderStatsBar('sliding', [
+        ['Solved', s.solves]
+      ]);
+    }
+
+    function snlRenderStats() {
+      const s = { ...STATS_DEFAULTS.snakeladders, ...getStats().snakeladders };
+      document.getElementById('snl-stats').innerHTML = renderStatsBar('snakeladders', [
+        ['P1 Wins', s.p1Wins], ['P2 Wins', s.p2Wins]
+      ]);
+    }
+
+    // ─── Auto-open first game on load ───────────────────────────────────────
+    showGame('tictactoe');
+  </script>
+</body>
+</html>
